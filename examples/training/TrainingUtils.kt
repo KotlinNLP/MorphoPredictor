@@ -58,7 +58,7 @@ internal fun buildTokensEncoderModel(
     components = listOf(
       EnsembleTokensEncoderModel.ComponentModel(
         model = TokensEncoderWrapperModel(
-          model = CharLMEncoderModel(charLM = directCharLM, revCharLM = reversedCharLM),
+          model = CharLMEncoderModel(dirCharLM = directCharLM, revCharLM = reversedCharLM),
           converter = CastConverter()),
         trainable = false),
       EnsembleTokensEncoderModel.ComponentModel(
