@@ -160,9 +160,9 @@ data class Dataset(val examples: List<Example>) {
 
       File(filePath).forEachLine { line ->
 
-        val jsonExample: JsonObject = Parser().parse(StringBuilder(line)) as JsonObject
-
         try {
+
+          val jsonExample: JsonObject = Parser().parse(StringBuilder(line)) as JsonObject
 
           var startChar = 0
 
