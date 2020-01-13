@@ -32,7 +32,7 @@ class Evaluator(
   encoderModel: TokensEncoderModel<FormToken, MorphoSentence<FormToken>>,
   dataset: Dataset,
   verbose: Boolean = true
-) : Evaluator<Dataset.Example>(
+) : Evaluator<Dataset.Example, Statistics>(
   examples = dataset.examples,
   verbose = verbose
 ) {
