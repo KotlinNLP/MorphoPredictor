@@ -8,7 +8,7 @@
 package com.kotlinnlp.morphopredictor.helpers.dataset
 
 import com.beust.klaxon.JsonObject
-import com.beust.klaxon.Parser
+import com.beust.klaxon.Klaxon
 import com.kotlinnlp.linguisticdescription.morphology.MorphologicalAnalysis
 import com.kotlinnlp.linguisticdescription.morphology.properties.GrammaticalProperty
 import com.kotlinnlp.linguisticdescription.morphology.properties.GrammaticalPropertyFactory
@@ -18,7 +18,6 @@ import com.kotlinnlp.linguisticdescription.sentence.token.RealToken
 import com.kotlinnlp.linguisticdescription.sentence.token.properties.Position
 import com.kotlinnlp.morphologicalanalyzer.MorphologicalAnalyzer
 import java.io.File
-import java.lang.StringBuilder
 import com.kotlinnlp.linguisticdescription.sentence.Sentence as LDSentence
 
 /**
@@ -162,7 +161,7 @@ data class Dataset(val examples: List<Example>) {
 
         try {
 
-          val jsonExample: JsonObject = Parser().parse(StringBuilder(line)) as JsonObject
+          val jsonExample: JsonObject = Klaxon().parseJsonObject(line.reader())
 
           var startChar = 0
 
