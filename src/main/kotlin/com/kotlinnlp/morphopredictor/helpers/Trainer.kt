@@ -113,7 +113,7 @@ class Trainer(
           // Handle the 'null' value
           val goldIndex: Int = goldValue?.let { propertyValues.indexOf(it) } ?: propertyValues.size
 
-          SoftmaxCrossEntropyCalculator().calculateErrors(output = prediction.distribution, goldIndex = goldIndex)
+          SoftmaxCrossEntropyCalculator.calculateErrors(output = prediction.distribution, goldIndex = goldIndex)
         }
       }
 
