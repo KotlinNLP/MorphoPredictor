@@ -9,14 +9,12 @@ package com.kotlinnlp.morphopredictor
 
 import com.kotlinnlp.linguisticdescription.morphology.properties.*
 import com.kotlinnlp.linguisticdescription.morphology.properties.Number as NumberProp
-import com.kotlinnlp.simplednn.core.functionalities.activations.ActivationFunction
 import com.kotlinnlp.simplednn.core.functionalities.activations.Softmax
 import com.kotlinnlp.simplednn.core.functionalities.activations.Tanh
 import com.kotlinnlp.simplednn.core.layers.LayerInterface
 import com.kotlinnlp.simplednn.core.layers.LayerType
 import com.kotlinnlp.simplednn.core.layers.StackedLayersParameters
-import com.kotlinnlp.simplednn.core.layers.models.merge.mergeconfig.ConcatMerge
-import com.kotlinnlp.simplednn.deeplearning.birnn.BiRNN
+import com.kotlinnlp.simplednn.deeplearning.transformers.BERTModel
 import com.kotlinnlp.utils.Serializer
 import java.io.InputStream
 import java.io.OutputStream
@@ -25,17 +23,10 @@ import java.io.Serializable
 /**
  * The [MorphoPredictor] parameters.
  *
- * @param tokenEncodingSize the size of the tokens encodings
- * @param hiddenSize the size of the hidden layer of the BiRNNs
- * @param hiddenActivation the activation of the hidden layer of the BiRNNs
- * @param recurrentConnectionType the connection type of the recurrent layer of the BiRNNs
+ * @property bertModel a BERT model
  */
-class MorphoPredictorModel(
-  internal val tokenEncodingSize: Int,
-  hiddenSize: Int,
+class MorphoPredictorModel(val bertModel: BERTModel) : Serializable {
   hiddenActivation: ActivationFunction? = Tanh,
-  recurrentConnectionType: LayerType.Connection = LayerType.Connection.LSTM
-) : Serializable {
 
   companion object {
 
@@ -69,24 +60,16 @@ class MorphoPredictorModel(
   }
 
   /**
-   * The BiRNN model for the input encoding.
-   */
-  val biRNN = BiRNN(
-    inputType = LayerType.Input.Dense,
-    inputSize = this.tokenEncodingSize,
-    hiddenSize = hiddenSize,
-    hiddenActivation = hiddenActivation,
-    recurrentConnectionType = recurrentConnectionType,
-    outputMergeConfiguration = ConcatMerge())
-
-  /**
    * The output networks for the grammatical properties prediction, associated by property name.
    */
   val outputNetworks: Map<String, StackedLayersParameters> = propertiesMap.mapValues {
     StackedLayersParameters(
       LayerInterface(
-        size = this.biRNN.outputSize,
-        type = LayerType.Input.Dense),
+        size = this.bertModel.inputSize),
+      LayerInterface(
+        size = this.bertModel.inputSize,
+        connectionType = LayerType.Connection.Feedforward,
+        activationFunction = Tanh()),
       LayerInterface(
         size = it.value.size + 1, // the 'null' output is included as last index
         connectionType = LayerType.Connection.Feedforward,

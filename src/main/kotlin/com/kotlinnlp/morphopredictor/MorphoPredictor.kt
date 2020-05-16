@@ -8,11 +8,14 @@
 package com.kotlinnlp.morphopredictor
 
 import com.kotlinnlp.linguisticdescription.morphology.properties.GrammaticalProperty
+import com.kotlinnlp.linguisticdescription.sentence.Sentence
+import com.kotlinnlp.linguisticdescription.sentence.token.FormToken
 import com.kotlinnlp.simplednn.core.neuralprocessor.NeuralProcessor
 import com.kotlinnlp.simplednn.core.neuralprocessor.batchfeedforward.BatchFeedforwardProcessor
 import com.kotlinnlp.simplednn.core.optimizer.ParamsErrorsList
-import com.kotlinnlp.simplednn.deeplearning.birnn.BiRNNEncoder
+import com.kotlinnlp.simplednn.deeplearning.transformers.BERT
 import com.kotlinnlp.simplednn.simplemath.ndarray.dense.DenseNDArray
+import com.kotlinnlp.utils.WordPieceTokenizer
 
 /**
  * The predictor of grammatical properties of tokens.
@@ -26,13 +29,12 @@ import com.kotlinnlp.simplednn.simplemath.ndarray.dense.DenseNDArray
  */
 class MorphoPredictor(
   val model: MorphoPredictorModel,
-  override val propagateToInput: Boolean = false,
   override val id: Int = 0
 ) : NeuralProcessor<
-  List<DenseNDArray>, // InputType
+  Sentence<FormToken>, // InputType
   List<Map<String, MorphoPredictor.Prediction>>, // OutputType
   List<Map<String, DenseNDArray>>, // ErrorsType
-  List<DenseNDArray> // InputErrorsType
+  NeuralProcessor.NoInputErrors // InputErrorsType
   > {
 
   /**
@@ -45,10 +47,19 @@ class MorphoPredictor(
   class Prediction(val property: String, val value: GrammaticalProperty?, val distribution: DenseNDArray)
 
   /**
-   * The BiRNN encoder.
+   *
    */
-  private val biRNNEncoder =
-    BiRNNEncoder<DenseNDArray>(network = this.model.biRNN, propagateToInput = this.propagateToInput)
+  override val propagateToInput: Boolean = false
+
+  /**
+   * The input tokenizer.
+   */
+  private val tokenizer = WordPieceTokenizer(this.model.bertModel.vocabulary)
+
+  /**
+   * The context encoder.
+   */
+  private val contextEncoder = BERT(model = this.model.bertModel, fineTuning = true, propagateToInput = false)
 
   /**
    * The output networks for the grammatical properties prediction, associated by property name.
@@ -59,17 +70,30 @@ class MorphoPredictor(
     }
 
   /**
+   * The ranges of word-pieces groups of the last forward.
+   * This is a support variable for the backward.
+   */
+  private lateinit var lastWordPiecesRanges: List<IntRange>
+
+  /**
    * Calculate the distribution scores of the morphological properties of the tokens.
    *
    * @param input a list of the token encodings of a sentence
    *
    * @return the predictions of the morphological properties, one per token
    */
-  override fun forward(input: List<DenseNDArray>): List<Map<String, Prediction>> {
+  override fun forward(input: Sentence<FormToken>): List<Map<String, Prediction>> {
 
-    val contextEncodings: List<DenseNDArray> = this.biRNNEncoder.forward(input)
+    val wordPieces: List<String> = this.tokenizer.tokenize(input.tokens.asSequence().map { it.form })
+    this.lastWordPiecesRanges = this.tokenizer.groupPieces(wordPieces)
+
+    val piecesVectors: List<DenseNDArray> = this.contextEncoder.forward(wordPieces)
+    val contextEncodings: List<DenseNDArray> = this.mergeEncodings(encodings = piecesVectors)
+
+    require(contextEncodings.size == input.tokens.size)
+
     val outputMaps: List<MutableMap<String, Prediction>> =
-      List(size = input.size, init = { mutableMapOf<String, Prediction>() })
+      List(size = input.tokens.size, init = { mutableMapOf<String, Prediction>() })
 
     this.outputProcessors.forEach { (propertyName, processor) ->
       processor.forward(contextEncodings).zip(outputMaps).forEach { (prediction, outputMap) ->
@@ -93,23 +117,36 @@ class MorphoPredictor(
    */
   override fun backward(outputErrors: List<Map<String, DenseNDArray>>) {
 
-    var encodingErrors: List<DenseNDArray>? = null
+    fun splitErrors(groupSize: Int, errors: DenseNDArray): List<DenseNDArray> =
+      if (groupSize == 1) {
+        listOf(errors)
+      } else {
+        val divErrors: DenseNDArray = errors.div(groupSize.toDouble())
+        List(groupSize) { divErrors }
+      }
+
+    // ------------------------
+
+    var contextErrors: List<DenseNDArray>? = null
 
     this.outputProcessors.forEach { (propertyName, processor) ->
 
       processor.backward(outputErrors.map { it.getValue(propertyName) })
 
-      if (encodingErrors == null)
-        encodingErrors = processor.getInputErrors(copy = true)
+      if (contextErrors == null)
+        contextErrors = processor.getInputErrors(copy = true)
       else
-        encodingErrors!!.zip(processor.getInputErrors(copy = false)).forEach { (encodingError, processorError) ->
+        contextErrors!!.zip(processor.getInputErrors(copy = false)).forEach { (encodingError, processorError) ->
           encodingError.assignSum(processorError)
         }
     }
 
-    encodingErrors!!.forEach { it.assignDiv(this.outputProcessors.size.toDouble()) }
+    contextErrors!!.forEach { it.assignDiv(this.outputProcessors.size.toDouble()) }
 
-    this.biRNNEncoder.backward(encodingErrors!!)
+    val contextPiecesErrors: List<DenseNDArray> = this.lastWordPiecesRanges.zip(contextErrors!!)
+      .flatMap { (range, errors) -> splitErrors(groupSize = range.length, errors = errors) }
+
+    this.contextEncoder.backward(contextPiecesErrors)
   }
 
   /**
@@ -119,7 +156,7 @@ class MorphoPredictor(
    *
    * @return the list of input errors
    */
-  override fun getInputErrors(copy: Boolean): List<DenseNDArray> = this.biRNNEncoder.getInputErrors(copy)
+  override fun getInputErrors(copy: Boolean) = NeuralProcessor.NoInputErrors
 
   /**
    * @param copy a Boolean indicating whether the returned errors must be a copy or a reference
@@ -127,7 +164,38 @@ class MorphoPredictor(
    * @return the errors of this frame extractor parameters
    */
   override fun getParamsErrors(copy: Boolean): ParamsErrorsList =
-    this.outputProcessors.values.fold(this.biRNNEncoder.getParamsErrors(copy)) { errors, processor ->
+    this.outputProcessors.values.fold(this.contextEncoder.getParamsErrors(copy)) { errors, processor ->
       errors + processor.getParamsErrors(copy)
     }
+
+  /**
+   * Get the encodings of the basic words obtained concatenating consecutive word-pieces of a given list.
+   * The encoding of each word is the average of the encodings of its word-pieces components.
+   *
+   * @param encodings the encodings of the given word-pieces
+   *
+   * @return the encodings merged by words
+   */
+  private fun mergeEncodings(encodings: List<DenseNDArray>): List<DenseNDArray> =
+
+    this.lastWordPiecesRanges.map { range ->
+
+      if (range.length == 1) {
+
+        encodings[range.first]
+
+      } else {
+
+        val piecesEncodings: List<DenseNDArray> = encodings.slice(range)
+
+        piecesEncodings[0].sum(piecesEncodings[1])
+          .also { res -> piecesEncodings.subList(2, piecesEncodings.size).forEach { res.assignSum(it) } }
+          .assignDiv(piecesEncodings.size.toDouble())
+      }
+    }
+
+  /**
+   * The length of this range.
+   */
+  private val IntRange.length get() = this.last - this.first + 1
 }

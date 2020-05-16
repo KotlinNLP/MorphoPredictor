@@ -22,12 +22,12 @@ internal class CommandLineArguments(args: Array<String>) {
   private val parser = ArgParser(args)
 
   /**
-   * The file path of the serialized text morpho predictor model.
+   * The file path of the serialized morpho predictor model.
    */
   val modelPath: String by parser.storing(
     "-m",
     "--model-path",
-    help="the file path of the serialized text morpho predictor model"
+    help="the file path of the serialized morpho predictor model"
   )
 
   /**

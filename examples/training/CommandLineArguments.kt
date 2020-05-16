@@ -92,6 +92,15 @@ internal class CommandLineArguments(args: Array<String>) {
   )
 
   /**
+   * The file path of the serialized BERT model.
+   */
+  val bertPath: String by parser.storing(
+    "-b",
+    "--bert-path",
+    help="the file path of the serialized BERT model"
+  )
+
+  /**
    * Force parsing all arguments (only read ones are parsed by default).
    */
   init {

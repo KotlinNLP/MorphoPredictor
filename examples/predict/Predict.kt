@@ -16,8 +16,6 @@ import com.kotlinnlp.linguisticdescription.sentence.token.RealToken
 import com.kotlinnlp.morphologicalanalyzer.MorphologicalAnalyzer
 import com.kotlinnlp.morphologicalanalyzer.dictionary.MorphologyDictionary
 import com.kotlinnlp.morphopredictor.*
-import com.kotlinnlp.neuraltokenizer.Token as TkToken
-import com.kotlinnlp.neuraltokenizer.Sentence as TkSentence
 import com.kotlinnlp.neuraltokenizer.NeuralTokenizer
 import com.kotlinnlp.neuraltokenizer.NeuralTokenizerModel
 import com.xenomachina.argparser.mainBody
@@ -43,12 +41,12 @@ fun main(args: Array<String>) = mainBody {
     MorphologyDictionary.load(FileInputStream(File(it)))
   })
 
-  val model: TextMorphoPredictorModel = parsedArgs.modelPath.let {
-    println("Loading text morphological predictor model from '$it'...")
-    TextMorphoPredictorModel.load(FileInputStream(File(it)))
+  val model: MorphoPredictorModel = parsedArgs.modelPath.let {
+    println("Loading morphological predictor model from '$it'...")
+    MorphoPredictorModel.load(FileInputStream(File(it)))
   }
 
-  val textPredictor = TextMorphoPredictor(model)
+  val predictor = MorphoPredictor(model)
 
   while (true) {
 
@@ -67,7 +65,7 @@ fun main(args: Array<String>) = mainBody {
           tokens = sentence.tokens,
           morphoAnalysis = analyzer.analyze(sentence as RealSentence<RealToken>))
 
-        val output: List<Map<String, MorphoPredictor.Prediction>> = textPredictor.predict(inputSentence)
+        val output: List<Map<String, MorphoPredictor.Prediction>> = predictor.forward(inputSentence)
 
         println()
         printResults(sentence = inputSentence, output = output)

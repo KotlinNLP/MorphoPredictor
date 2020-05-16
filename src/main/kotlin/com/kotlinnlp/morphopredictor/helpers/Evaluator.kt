@@ -12,24 +12,19 @@ import com.kotlinnlp.linguisticdescription.sentence.MorphoSentence
 import com.kotlinnlp.linguisticdescription.sentence.token.FormToken
 import com.kotlinnlp.morphopredictor.MorphoPredictor
 import com.kotlinnlp.morphopredictor.MorphoPredictorModel
-import com.kotlinnlp.morphopredictor.TextMorphoPredictor
-import com.kotlinnlp.morphopredictor.TextMorphoPredictorModel
 import com.kotlinnlp.morphopredictor.helpers.dataset.Dataset
 import com.kotlinnlp.simplednn.helpers.Evaluator
-import com.kotlinnlp.tokensencoder.TokensEncoderModel
 import com.kotlinnlp.utils.stats.MetricCounter
 
 /**
  * A helper to evaluate a [MorphoPredictorModel].
  *
  * @param model the model to evaluate
- * @param encoderModel the tokens encoder model
  * @param dataset the validation dataset
  * @param verbose whether to print info about the validation progress (default = true)
  */
 class Evaluator(
   model: MorphoPredictorModel,
-  encoderModel: TokensEncoderModel<FormToken, MorphoSentence<FormToken>>,
   dataset: Dataset,
   verbose: Boolean = true
 ) : Evaluator<Dataset.Example, Statistics>(
@@ -40,8 +35,7 @@ class Evaluator(
   /**
    * A morphological predictor built with the given model.
    */
-  private val predictor = TextMorphoPredictor(
-    model = TextMorphoPredictorModel(morphoPredictor = model, tokensEncoder = encoderModel))
+  private val predictor = MorphoPredictor(model)
 
   /**
    * The validation statistics.
@@ -57,7 +51,7 @@ class Evaluator(
 
     @Suppress("UNCHECKED_CAST")
     val output: List<Map<String, MorphoPredictor.Prediction>> =
-      this.predictor.predict(example.sentence as MorphoSentence<FormToken>)
+      this.predictor.forward(example.sentence as MorphoSentence<FormToken>)
 
     example.sentence.tokens.zip(output).forEach { (token, tokenPredictions) ->
       tokenPredictions.forEach { (propertyName, prediction) ->

@@ -7,16 +7,14 @@
 
 package training
 
-import com.kotlinnlp.linguisticdescription.sentence.MorphoSentence
 import com.kotlinnlp.morphopredictor.MorphoPredictorModel
 import com.kotlinnlp.morphopredictor.helpers.Trainer
 import com.kotlinnlp.morphopredictor.helpers.Evaluator
 import com.kotlinnlp.morphopredictor.helpers.dataset.Dataset
-import com.kotlinnlp.linguisticdescription.sentence.token.FormToken
 import com.kotlinnlp.morphologicalanalyzer.MorphologicalAnalyzer
 import com.kotlinnlp.morphologicalanalyzer.dictionary.MorphologyDictionary
 import com.kotlinnlp.simplednn.core.functionalities.updatemethods.radam.RADAMMethod
-import com.kotlinnlp.tokensencoder.TokensEncoderModel
+import com.kotlinnlp.simplednn.deeplearning.transformers.BERTModel
 import com.xenomachina.argparser.mainBody
 import java.io.File
 import java.io.FileInputStream
@@ -42,10 +40,12 @@ fun main(args: Array<String>) = mainBody {
     println("Loading validation dataset from '$it'...")
     Dataset.fromFile(filePath = it, analyzer = analyzer)
   }
+  val bertModel: BERTModel = parsedArgs.bertPath.let {
+    println("Loading BERT serialized model from '$it'...")
+    BERTModel.load(FileInputStream(File(it)))
+  }
 
-  val encoderModel: TokensEncoderModel<FormToken, MorphoSentence<FormToken>> =
-    buildTokensEncoderModel(parsedArgs = parsedArgs, trainingDataset = trainingDataset)
-  val model = MorphoPredictorModel(tokenEncodingSize = encoderModel.tokenEncodingSize, hiddenSize = 200)
+  val model = MorphoPredictorModel(bertModel)
 
   println()
   println("Training examples: ${trainingDataset.examples.size}.")
@@ -53,13 +53,11 @@ fun main(args: Array<String>) = mainBody {
 
   Trainer(
     model = model,
-    encoderModel = encoderModel,
     dataset = trainingDataset,
     analyzer = analyzer,
     modelFilename = parsedArgs.modelPath,
     epochs = parsedArgs.epochs,
-    encoderUpdateMethod = RADAMMethod(stepSize = 0.001, beta1 = 0.9, beta2 = 0.999),
-    evaluator = Evaluator(model = model, encoderModel = encoderModel, dataset = validationDataset),
-    saveWholeModel = true
+    updateMethod = RADAMMethod(stepSize = 0.001, beta1 = 0.9, beta2 = 0.999),
+    evaluator = Evaluator(model = model, dataset = validationDataset)
   ).train()
 }

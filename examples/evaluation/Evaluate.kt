@@ -9,7 +9,7 @@ package evaluation
 
 import com.kotlinnlp.morphologicalanalyzer.MorphologicalAnalyzer
 import com.kotlinnlp.morphologicalanalyzer.dictionary.MorphologyDictionary
-import com.kotlinnlp.morphopredictor.TextMorphoPredictorModel
+import com.kotlinnlp.morphopredictor.MorphoPredictorModel
 import com.kotlinnlp.morphopredictor.helpers.Evaluator
 import com.kotlinnlp.morphopredictor.helpers.dataset.Dataset
 import com.kotlinnlp.simplednn.helpers.Statistics
@@ -19,7 +19,7 @@ import java.io.File
 import java.io.FileInputStream
 
 /**
- * Evaluate a [TextMorphoPredictorModel].
+ * Evaluate a [MorphoPredictorModel].
  *
  * Launch with the '-h' option for help about the command line arguments.
  */
@@ -37,15 +37,12 @@ fun main(args: Array<String>) = mainBody {
     Dataset.fromFile(filePath = it, analyzer = analyzer)
   }
 
-  val model: TextMorphoPredictorModel = parsedArgs.modelPath.let {
+  val model: MorphoPredictorModel = parsedArgs.modelPath.let {
     println("Loading text morphological predictor model from '$it'...")
-    TextMorphoPredictorModel.load(FileInputStream(File(it)))
+    MorphoPredictorModel.load(FileInputStream(File(it)))
   }
 
-  val evaluator = Evaluator(
-    model = model.morphoPredictor,
-    encoderModel = model.tokensEncoder,
-    dataset = validationDataset)
+  val evaluator = Evaluator(model = model, dataset = validationDataset)
 
   println("\nStart validation on %d examples".format(validationDataset.examples.size))
 
