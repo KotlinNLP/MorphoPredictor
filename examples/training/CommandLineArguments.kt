@@ -49,31 +49,6 @@ internal class CommandLineArguments(args: Array<String>) {
   )
 
   /**
-   * The file path of the lexicon dictionary.
-   */
-  val lexiconDictionaryPath: String? by parser.storing(
-    "-x",
-    "--lexicon",
-    help="the file path of the lexicon dictionary"
-  ).default { null }
-
-  /**
-   * The file path of the serialized direct char language model.
-   */
-  val directLanguageModelPath: String by parser.storing(
-    "--direct-lm",
-    help="the file path of the serialized direct char language model"
-  )
-
-  /**
-   * The file path of the serialized reversed char language model.
-   */
-  val reversedLanguageModelPath: String by parser.storing(
-    "--reversed-lm",
-    help="the file path of the serialized reversed char language model"
-  )
-
-  /**
    * The file path of the training dataset.
    */
   val trainingSetPath: String by parser.storing(
