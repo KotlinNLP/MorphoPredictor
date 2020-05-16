@@ -51,7 +51,7 @@ class MorphoPredictor(
   override val useDropout: Boolean = false
 
   /**
-   * The BiRNN1 encoder.
+   * The BiRNN encoder.
    */
   private val biRNNEncoder = BiRNNEncoder<DenseNDArray>(
     network = this.model.biRNN,
