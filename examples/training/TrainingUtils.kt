@@ -69,7 +69,7 @@ internal fun buildTokensEncoderModel(
             tokenEncodingSize = 100,
             activation = null),
           converter = MirrorConverter()),
-        trainable = false)
+        trainable = true)
     ),
     outputMergeConfiguration = ConcatFeedforwardMerge(outputSize = 100)
   )
