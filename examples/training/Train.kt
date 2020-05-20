@@ -15,7 +15,7 @@ import com.kotlinnlp.morphopredictor.helpers.dataset.Dataset
 import com.kotlinnlp.linguisticdescription.sentence.token.FormToken
 import com.kotlinnlp.morphologicalanalyzer.MorphologicalAnalyzer
 import com.kotlinnlp.morphologicalanalyzer.dictionary.MorphologyDictionary
-import com.kotlinnlp.simplednn.core.functionalities.updatemethods.adam.ADAMMethod
+import com.kotlinnlp.simplednn.core.functionalities.updatemethods.radam.RADAMMethod
 import com.kotlinnlp.tokensencoder.TokensEncoderModel
 import com.xenomachina.argparser.mainBody
 import java.io.File
@@ -58,7 +58,7 @@ fun main(args: Array<String>) = mainBody {
     analyzer = analyzer,
     modelFilename = parsedArgs.modelPath,
     epochs = parsedArgs.epochs,
-    encoderUpdateMethod = ADAMMethod(stepSize = 0.001, beta1 = 0.9, beta2 = 0.999),
+    encoderUpdateMethod = RADAMMethod(stepSize = 0.001, beta1 = 0.9, beta2 = 0.999),
     evaluator = Evaluator(model = model, encoderModel = encoderModel, dataset = validationDataset),
     saveWholeModel = true,
     useDropout = false

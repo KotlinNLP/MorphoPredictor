@@ -17,7 +17,7 @@ import com.kotlinnlp.morphopredictor.MorphoPredictorModel
 import com.kotlinnlp.morphopredictor.TextMorphoPredictorModel
 import com.kotlinnlp.simplednn.core.functionalities.losses.SoftmaxCrossEntropyCalculator
 import com.kotlinnlp.simplednn.core.functionalities.updatemethods.UpdateMethod
-import com.kotlinnlp.simplednn.core.functionalities.updatemethods.adam.ADAMMethod
+import com.kotlinnlp.simplednn.core.functionalities.updatemethods.radam.RADAMMethod
 import com.kotlinnlp.simplednn.core.optimizer.ParamsOptimizer
 import com.kotlinnlp.simplednn.helpers.Trainer
 import com.kotlinnlp.simplednn.simplemath.ndarray.dense.DenseNDArray
@@ -50,7 +50,7 @@ class Trainer(
   private val encoderModel: TokensEncoderModel<FormToken, MorphoSentence<FormToken>>,
   private val analyzer: MorphologicalAnalyzer,
   epochs: Int,
-  predictorUpdateMethod: UpdateMethod<*> = ADAMMethod(stepSize = 0.001, beta1 = 0.9, beta2 = 0.999),
+  predictorUpdateMethod: UpdateMethod<*> = RADAMMethod(stepSize = 0.001, beta1 = 0.9, beta2 = 0.999),
   encoderUpdateMethod: UpdateMethod<*>? = null,
   useDropout: Boolean,
   evaluator: Evaluator,
