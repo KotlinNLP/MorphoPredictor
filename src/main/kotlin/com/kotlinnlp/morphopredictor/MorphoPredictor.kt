@@ -45,25 +45,17 @@ class MorphoPredictor(
   class Prediction(val property: String, val value: GrammaticalProperty?, val distribution: DenseNDArray)
 
   /**
-   * The dropout is not useful for this processor because it has encodings as input and they make sense if used in
-   * their original form.
-   */
-  override val useDropout: Boolean = false
-
-  /**
    * The BiRNN encoder.
    */
-  private val biRNNEncoder = BiRNNEncoder<DenseNDArray>(
-    network = this.model.biRNN,
-    propagateToInput = this.propagateToInput,
-    useDropout = false)
+  private val biRNNEncoder =
+    BiRNNEncoder<DenseNDArray>(network = this.model.biRNN, propagateToInput = this.propagateToInput)
 
   /**
    * The output networks for the grammatical properties prediction, associated by property name.
    */
   private val outputProcessors: Map<String, BatchFeedforwardProcessor<DenseNDArray>> =
     this.model.outputNetworks.mapValues {
-      BatchFeedforwardProcessor<DenseNDArray>(model = it.value, propagateToInput = true, useDropout = false)
+      BatchFeedforwardProcessor<DenseNDArray>(model = it.value, propagateToInput = true)
     }
 
   /**

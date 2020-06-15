@@ -60,7 +60,6 @@ fun main(args: Array<String>) = mainBody {
     epochs = parsedArgs.epochs,
     encoderUpdateMethod = RADAMMethod(stepSize = 0.001, beta1 = 0.9, beta2 = 0.999),
     evaluator = Evaluator(model = model, encoderModel = encoderModel, dataset = validationDataset),
-    saveWholeModel = true,
-    useDropout = false
+    saveWholeModel = true
   ).train()
 }

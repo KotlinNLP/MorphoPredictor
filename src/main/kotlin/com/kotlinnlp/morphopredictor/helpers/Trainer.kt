@@ -37,7 +37,6 @@ import java.io.FileOutputStream
  * @param epochs the number of training epochs
  * @param predictorUpdateMethod the update method to optimize the morphological predictor model parameters
  * @param encoderUpdateMethod the update method for the parameters of the tokens encoder (null if must not be trained)
- * @param useDropout whether to apply the dropout of the input
  * @param evaluator the helper for the evaluation (default null)
  * @param saveWholeModel whether to save the whole model as [TextMorphoPredictorModel]
  * @param shuffler used to shuffle the examples before each epoch (with pseudo random by default)
@@ -52,7 +51,6 @@ class Trainer(
   epochs: Int,
   predictorUpdateMethod: UpdateMethod<*> = RADAMMethod(stepSize = 0.001, beta1 = 0.9, beta2 = 0.999),
   encoderUpdateMethod: UpdateMethod<*>? = null,
-  useDropout: Boolean,
   evaluator: Evaluator,
   private val saveWholeModel: Boolean,
   shuffler: Shuffler = Shuffler(),
@@ -79,7 +77,7 @@ class Trainer(
   /**
    * The encoder of the input tokens.
    */
-  private val encoder: TokensEncoder<FormToken, MorphoSentence<FormToken>> = encoderModel.buildEncoder(useDropout)
+  private val encoder: TokensEncoder<FormToken, MorphoSentence<FormToken>> = encoderModel.buildEncoder()
 
   /**
    * The optimizer of the [model] parameters.

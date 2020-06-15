@@ -9,7 +9,6 @@ package com.kotlinnlp.morphopredictor
 
 import com.kotlinnlp.linguisticdescription.sentence.MorphoSentence
 import com.kotlinnlp.linguisticdescription.sentence.token.FormToken
-import com.kotlinnlp.neuraltokenizer.Sentence as TokenizerSentence
 import com.kotlinnlp.simplednn.simplemath.ndarray.dense.DenseNDArray
 import com.kotlinnlp.tokensencoder.TokensEncoder
 
@@ -28,8 +27,7 @@ class TextMorphoPredictor(val model: TextMorphoPredictorModel) {
   /**
    * The encoder of the input tokens.
    */
-  private val encoder: TokensEncoder<FormToken, MorphoSentence<FormToken>> =
-    this.model.tokensEncoder.buildEncoder(useDropout = false)
+  private val encoder: TokensEncoder<FormToken, MorphoSentence<FormToken>> = this.model.tokensEncoder.buildEncoder()
 
   /**
    * Predict the morphological properties of the tokens of a given sentence.

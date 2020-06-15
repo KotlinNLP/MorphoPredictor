@@ -77,7 +77,6 @@ class MorphoPredictorModel(
     hiddenSize = hiddenSize,
     hiddenActivation = hiddenActivation,
     recurrentConnectionType = recurrentConnectionType,
-    dropout = 0.0, // the input is an encoding, it makes sense as complete numerical vector
     outputMergeConfiguration = ConcatMerge())
 
   /**
