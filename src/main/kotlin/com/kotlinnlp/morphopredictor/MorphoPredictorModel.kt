@@ -26,7 +26,6 @@ import java.io.Serializable
  * @property bertModel a BERT model
  */
 class MorphoPredictorModel(val bertModel: BERTModel) : Serializable {
-  hiddenActivation: ActivationFunction? = Tanh,
 
   companion object {
 
@@ -69,7 +68,7 @@ class MorphoPredictorModel(val bertModel: BERTModel) : Serializable {
       LayerInterface(
         size = this.bertModel.inputSize,
         connectionType = LayerType.Connection.Feedforward,
-        activationFunction = Tanh()),
+        activationFunction = Tanh),
       LayerInterface(
         size = it.value.size + 1, // the 'null' output is included as last index
         connectionType = LayerType.Connection.Feedforward,
